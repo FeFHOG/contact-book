@@ -4,6 +4,7 @@
 #include "contact_book_card.h"
 #include "contact_book_phone.h"
 
+// User 组合两个通讯录对象 对main提供菜单功能接口
 class User {
 private:
     ContactBookCard phoneBook;

@@ -11,11 +11,13 @@ using std::string;
 ContactBookPhone::ContactBookPhone(const string& fileName)
     : fileName(fileName)
 {
+    // 构造时立即读入
     loadFromFile();
 }
 
 ContactBookPhone::~ContactBookPhone()
 {
+    // 析构时自动写回
     saveToFile();
 }
 
@@ -26,11 +28,13 @@ bool ContactBookPhone::addContact(const ContactPhone& contact)
         return false;
     }
 
+    // 新增联系人时检测限制 
     if (!contacts.contains(contact.getPhoneNumber()) && contacts.size() >= 1000) {
         cout << "手机卡通讯录容量已满。\n";
         return false;
     }
 
+    // AVL 树按电话号码插入或覆盖同号码联系人
     contacts.insertOrUpdate(contact);
     return true;
 }
@@ -47,6 +51,7 @@ bool ContactBookPhone::updateContact(const string& phoneNumber, const ContactPho
     }
 
     if (phoneNumber != contact.getPhoneNumber()) {
+        // 修改时电话号码变了 需要先删除旧键 再按新键插入
         contacts.remove(phoneNumber);
     }
     contacts.insertOrUpdate(contact);
@@ -66,8 +71,9 @@ bool ContactBookPhone::hasContact(const string& phoneNumber) const
 void ContactBookPhone::findByName(const string& name) const
 {
     bool found = false;
+    // AVL 树只擅长按电话号码查找 按姓名不行
     for (const auto& contact : contacts.toVector()) {
-        // 使用 KMP 支持姓名关键字查询，而不是只能完整匹配姓名。
+        // 使用 KMP 可以不完整匹配
         if (kmpContains(contact.getName(), name)) {
             cout << contact << "------------------------------\n";
             found = true;
@@ -80,6 +86,7 @@ void ContactBookPhone::findByName(const string& name) const
 
 void ContactBookPhone::display() const
 {
+    // toVector 使用中序遍历，因此显示顺序天然按电话号码升序排列。
     std::vector<ContactPhone> allContacts = contacts.toVector();
     if (allContacts.empty()) {
         cout << "手机卡通讯录为空。\n";
@@ -116,6 +123,7 @@ void ContactBookPhone::loadFromFile()
     string qq;
     while (std::getline(fin, name) && std::getline(fin, phoneNumber)
            && std::getline(fin, hometown) && std::getline(fin, qq)) {
+         // 读文件时校验 避免历史脏数据进入
         if (!name.empty() && isValidPhoneNumber(phoneNumber)) {
             contacts.insertOrUpdate(ContactPhone(name, phoneNumber, hometown, qq));
         }
@@ -130,7 +138,7 @@ void ContactBookPhone::saveToFile() const
         return;
     }
 
-    // 每个手机卡联系人用四行保存：姓名、电话号码、籍贯、QQ。
+    // 手机卡联系人用四行保存
     for (const auto& contact : contacts.toVector()) {
         fout << contact.getName() << '\n'
              << contact.getPhoneNumber() << '\n'

@@ -3,6 +3,7 @@
 
 #include <string>
 
+// 检验是否合法
 bool isValidPhoneNumber(const std::string& phoneNumber);
 
 #endif

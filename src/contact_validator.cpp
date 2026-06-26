@@ -10,6 +10,7 @@ bool isValidPhoneNumber(const std::string& phoneNumber)
 
     int start = 0;
     if (phoneNumber[0] == '+') {
+        // 可以加区号但是只能开头
         start = 1;
     }
 
@@ -19,6 +20,7 @@ bool isValidPhoneNumber(const std::string& phoneNumber)
     }
 
     for (int i = start; i < static_cast<int>(phoneNumber.size()); ++i) {
+        // 使用 unsigned char 转换，避免 char 为负值时传给 isdigit 出现未定义行为  （ai改的）
         if (!std::isdigit(static_cast<unsigned char>(phoneNumber[i]))) {
             return false;
         }

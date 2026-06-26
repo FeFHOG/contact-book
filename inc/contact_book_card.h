@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+// 手机通讯录 保存 ContactCard 用AVL树按电话号码组织数据
 class ContactBookCard : public ContactBookInterface {
 private:
     ContactTree<ContactCard> contacts;

@@ -21,6 +21,7 @@ void User::addContact()
     cin >> where;
 
     if (where == 1) {
+        
         ContactCard contact;
         cin >> contact;
         if (phoneBook.addContact(contact)) {
@@ -43,7 +44,7 @@ void User::deleteContact()
     string phoneNumber;
     std::getline(cin >> std::ws, phoneNumber);
 
-    // 题目要求：如果两个存储位置都有该联系人，需要同时删除。
+    // “如果两个存储位置都有该联系人 需要同时删除”
     bool deletedPhone = phoneBook.deleteContact(phoneNumber);
     bool deletedCard = cardBook.deleteContact(phoneNumber);
 
@@ -62,7 +63,7 @@ void User::modifyContact()
 
     bool found = false;
 
-    // 题目要求：如果两个存储位置都有该联系人，需要同时修改。
+    // ”如果两个存储位置都有该联系人，需要同时修改“
     if (phoneBook.hasContact(phoneNumber)) {
         cout << "修改手机联系人信息:\n";
         ContactCard contact;
@@ -92,6 +93,7 @@ void User::findContactByName() const
     string name;
     std::getline(cin >> std::ws, name);
 
+
     cout << "【手机通讯录查询结果】\n";
     phoneBook.findByName(name);
     cout << "【手机卡通讯录查询结果】\n";
@@ -100,6 +102,7 @@ void User::findContactByName() const
 
 void User::displayAll() const
 {
+
     cout << "【手机通讯录】\n";
     phoneBook.display();
     cout << "【手机卡通讯录】\n";
@@ -114,7 +117,7 @@ void User::copyPhoneToCard()
     }
 
     for (const auto& contact : phoneBook.getContacts()) {
-        // 复制时跳过已有号码，避免重复联系人。
+        // 复制时跳过已有
         if (!cardBook.hasContact(contact.getPhoneNumber())) {
             cardBook.addContact(ContactPhone(contact.getName(), contact.getPhoneNumber(), "未填写", "未填写"));
         }
@@ -124,13 +127,13 @@ void User::copyPhoneToCard()
 
 void User::copyCardToPhone()
 {
+    
     if (phoneBook.size() + cardBook.size() > 1000) {
         cout << "手机容量不足，无法复制。\n";
         return;
     }
 
     for (const auto& contact : cardBook.getContacts()) {
-        // 手机联系人没有籍贯和 QQ，因此只保留姓名和电话号码。
         if (!phoneBook.hasContact(contact.getPhoneNumber())) {
             phoneBook.addContact(ContactCard(contact.getName(), contact.getPhoneNumber()));
         }
@@ -140,9 +143,10 @@ void User::copyCardToPhone()
 
 void User::movePhoneToCard()
 {
+    // 移动 ：复制 再删除
     copyPhoneToCard();
 
-    // 不能一边遍历 vector 一边删除原元素，先保存号码再统一删除。
+    // 先保存号码再统一删除
     std::vector<string> phoneNumbers;
     for (const auto& contact : phoneBook.getContacts()) {
         phoneNumbers.push_back(contact.getPhoneNumber());
@@ -156,9 +160,10 @@ void User::movePhoneToCard()
 
 void User::moveCardToPhone()
 {
+    // 移动 ：复制 再删除
     copyCardToPhone();
 
-    // 不能一边遍历 vector 一边删除原元素，先保存号码再统一删除。
+    //先保存号码再统一删除。
     std::vector<string> phoneNumbers;
     for (const auto& contact : cardBook.getContacts()) {
         phoneNumbers.push_back(contact.getPhoneNumber());
