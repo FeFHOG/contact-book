@@ -11,13 +11,13 @@ using std::string;
 ContactBookPhone::ContactBookPhone(const string& fileName)
     : fileName(fileName)
 {
-    // 构造时立即读入
+    // 一开始先把文件里的联系人读进来
     loadFromFile();
 }
 
 ContactBookPhone::~ContactBookPhone()
 {
-    // 析构时自动写回
+    // 程序结束时写回文件
     saveToFile();
 }
 
@@ -28,13 +28,13 @@ bool ContactBookPhone::addContact(const ContactPhone& contact)
         return false;
     }
 
-    // 新增联系人时检测限制 
+    // 超过 1000 个就不能再新增
     if (!contacts.contains(contact.getPhoneNumber()) && contacts.size() >= 1000) {
         cout << "手机卡通讯录容量已满。\n";
         return false;
     }
 
-    // AVL 树按电话号码插入或覆盖同号码联系人
+    // 树里面会按电话号码插入，同号码就覆盖
     contacts.insertOrUpdate(contact);
     return true;
 }
@@ -51,7 +51,7 @@ bool ContactBookPhone::updateContact(const string& phoneNumber, const ContactPho
     }
 
     if (phoneNumber != contact.getPhoneNumber()) {
-        // 修改时电话号码变了 需要先删除旧键 再按新键插入
+        // 如果电话号码也改了，就先删旧号码
         contacts.remove(phoneNumber);
     }
     contacts.insertOrUpdate(contact);
@@ -71,9 +71,10 @@ bool ContactBookPhone::hasContact(const string& phoneNumber) const
 void ContactBookPhone::findByName(const string& name) const
 {
     bool found = false;
-    // AVL 树只擅长按电话号码查找 按姓名不行
-    for (const auto& contact : contacts.toVector()) {
-        // 使用 KMP 可以不完整匹配
+    // AVL 树是按电话号码排的，姓名查询只能遍历
+    std::vector<ContactPhone> allContacts = contacts.toVector();
+    for (const ContactPhone& contact : allContacts) {
+        // 这里用 KMP 做包含匹配
         if (kmpContains(contact.getName(), name)) {
             cout << contact << "------------------------------\n";
             found = true;
@@ -86,14 +87,13 @@ void ContactBookPhone::findByName(const string& name) const
 
 void ContactBookPhone::display() const
 {
-    // toVector 使用中序遍历，因此显示顺序天然按电话号码升序排列。
     std::vector<ContactPhone> allContacts = contacts.toVector();
     if (allContacts.empty()) {
         cout << "手机卡通讯录为空。\n";
         return;
     }
 
-    for (const auto& contact : allContacts) {
+    for (const ContactPhone& contact : allContacts) {
         cout << contact << "------------------------------\n";
     }
 }
@@ -123,7 +123,7 @@ void ContactBookPhone::loadFromFile()
     string qq;
     while (std::getline(fin, name) && std::getline(fin, phoneNumber)
            && std::getline(fin, hometown) && std::getline(fin, qq)) {
-         // 读文件时校验 避免历史脏数据进入
+        // 读文件时也检查一下，防止文件里本来就有错数据
         if (!name.empty() && isValidPhoneNumber(phoneNumber)) {
             contacts.insertOrUpdate(ContactPhone(name, phoneNumber, hometown, qq));
         }
@@ -139,7 +139,8 @@ void ContactBookPhone::saveToFile() const
     }
 
     // 手机卡联系人用四行保存
-    for (const auto& contact : contacts.toVector()) {
+    std::vector<ContactPhone> allContacts = contacts.toVector();
+    for (const ContactPhone& contact : allContacts) {
         fout << contact.getName() << '\n'
              << contact.getPhoneNumber() << '\n'
              << contact.getHometown() << '\n'

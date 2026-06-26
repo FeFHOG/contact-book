@@ -7,7 +7,7 @@ class ContactBookInterface {
 public:
     virtual ~ContactBookInterface() = default;
 
-    // 抽象接口用于让不同类型通讯录拥有统一操作，体现多态。
+    // 这个接口让手机和手机卡都能用差不多的操作
     virtual bool deleteContact(const std::string& phoneNumber) = 0;
     virtual bool hasContact(const std::string& phoneNumber) const = 0;
     virtual void display() const = 0;

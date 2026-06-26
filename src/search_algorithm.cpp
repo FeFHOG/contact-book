@@ -4,7 +4,7 @@
 
 namespace {
 
-// 构造 KMP 的 next 数组，next[i] 表示 pattern[0..i] 的最长相等前后缀长度。
+// 构造 KMP 的 next 数组，记录前后缀能对上多少
 std::vector<int> buildNextArray(const std::string& pattern)
 {
     std::vector<int> next(pattern.size(), 0);
@@ -30,7 +30,7 @@ bool kmpContains(const std::string& text, const std::string& pattern)
 
     std::vector<int> next = buildNextArray(pattern);
     for (int i = 0, j = 0; i < static_cast<int>(text.size()); ++i) {
-        // 匹配失败时利用 next 数组回退模式串位置，避免从头比较。
+        // 匹配失败时用 next 数组往前跳，不用从头重来
         while (j > 0 && text[i] != pattern[j]) {
             j = next[j - 1];
         }

@@ -20,8 +20,8 @@ bool isValidPhoneNumber(const std::string& phoneNumber)
     }
 
     for (int i = start; i < static_cast<int>(phoneNumber.size()); ++i) {
-        // 使用 unsigned char 转换，避免 char 为负值时传给 isdigit 出现未定义行为  （ai改的）
-        if (!std::isdigit(static_cast<unsigned char>(phoneNumber[i]))) {
+        // 这里转一下类型，不然有些字符传给 isdigit 可能出问题
+        if (std::isdigit(static_cast<unsigned char>(phoneNumber[i])) == 0) {
             return false;
         }
     }

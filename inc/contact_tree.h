@@ -5,16 +5,15 @@
 #include <string>
 #include <vector>
 
-// 通用 AVL 树 
-// 用模板统一管理两类联系人 
+// 通用 AVL 树
+// 这里用模板是为了手机和手机卡两种联系人都能放
 template <typename T>
 class ContactTree {
 private:
     /* 
     AVL 树节点
-    data  联系人对象
-    height 计算平衡因子
-    同一棵树模板可复用给手机联系人和手机卡联系人
+    data 放联系人
+    height 记录高度，后面算平衡因子要用
     */ 
     struct Node {
         T data;
@@ -34,38 +33,37 @@ private:
     // 空节点高度 0 叶节点 1
     int height(Node* node) const
     {
-        if (node) {
+        if (node != nullptr) {
             return node->height;
         }
         return 0;
     }
 
-    // AVL 平衡因子 = 左子树高度 - 右子树高度
-    //  > 1 or < -1 说明需要旋转调整
+    // 平衡因子就是左边高度减右边高度
     int balanceFactor(Node* node) const
     {
-        if (node) {
+        if (node != nullptr) {
             return height(node->left) - height(node->right);
         }
         return 0;
     }
 
-    // 自底向上更新节点高度
+    // 改完左右儿子后要重新算高度
     void updateHeight(Node* node)
     {
-        if (node) {
+        if (node != nullptr) {
             node->height = std::max(height(node->left), height(node->right)) + 1;
         }
     }
 
-    Node* rotateRight(Node* y)//修复失衡
+    Node* rotateRight(Node* y)
     {
-        // 右旋
+        // 右旋，用来修左边太高的情况
         Node* x = y->left;
-        Node* movedSubtree = x->right;
+        Node* temp = x->right;
 
         x->right = y;
-        y->left = movedSubtree;
+        y->left = temp;
 
         updateHeight(y);
         updateHeight(x);
@@ -74,12 +72,12 @@ private:
 
     Node* rotateLeft(Node* x)
     {
-        // 左旋
+        // 左旋，用来修右边太高的情况
         Node* y = x->right;
-        Node* movedSubtree = y->left;
+        Node* temp = y->left;
 
         y->left = x;
-        x->right = movedSubtree;
+        x->right = temp;
 
         updateHeight(x);
         updateHeight(y);
@@ -88,12 +86,12 @@ private:
 
     Node* rebalance(Node* node)
     {
-        // 先更新高度 then根据平衡因子决定是否旋转
+        // 先更新高度，再看看要不要旋转
         updateHeight(node);
         int balance = balanceFactor(node);
 
         if (balance > 1) {
-            // 左子树更高
+            // 左边高太多
             if (balanceFactor(node->left) < 0) {
                 node->left = rotateLeft(node->left);
             }
@@ -101,7 +99,7 @@ private:
         }
 
         if (balance < -1) {
-            // 右子树更高
+            // 右边高太多
             if (balanceFactor(node->right) > 0) {
                 node->right = rotateRight(node->right);
             }
@@ -113,33 +111,33 @@ private:
 
     Node* insert(Node* node, const T& contact, bool& added)
     {
-        // 按电话号码作为关键字插入 保证左子树号码更小
-        if (!node) {
+        // 按电话号码插入，小的放左边，大的放右边
+        if (node == nullptr) {
             added = true;
             ++nodeCount;
             return new Node(contact);
         }
 
-        const std::string phoneNumber = contact.getPhoneNumber();
-        const std::string currentNumber = node->data.getPhoneNumber();
-        if (phoneNumber < currentNumber) {
+        const std::string phone = contact.getPhoneNumber();
+        const std::string nowPhone = node->data.getPhoneNumber();
+        if (phone < nowPhone) {
             node->left = insert(node->left, contact, added);
-        } else if (phoneNumber > currentNumber) {
+        } else if (phone > nowPhone) {
             node->right = insert(node->right, contact, added);
         } else {
-            // 电话号码相同视为同一联系人 覆盖
+            // 电话号码一样就当成同一个人，直接覆盖
             node->data = contact;
             return node;
         }
 
-        //回溯恢复 AVL 平衡
+        // 回来的时候顺便把 AVL 调平
         return rebalance(node);
     }
 
     Node* minNode(Node* node) const
     {
-        // 当前子树中最小电话号码节点一定在最左侧
-        while (node && node->left) {
+        // 最小的电话号码一定一直往左走
+        while (node != nullptr && node->left != nullptr) {
             node = node->left;
         }
         return node;
@@ -147,8 +145,8 @@ private:
 
     Node* remove(Node* node, const std::string& phoneNumber, bool& removed)
     {
-        // 删除同样按电话号码搜索目标节点。
-        if (!node) {
+        // 删除也是先按电话号码找到这个节点
+        if (node == nullptr) {
             return nullptr;
         }
 
@@ -158,10 +156,10 @@ private:
             node->right = remove(node->right, phoneNumber, removed);
         } else {
             removed = true;
-            if (!node->left || !node->right) {
-                // 只有 0 or 1 子时，直接用子替换当前节点。
+            if (node->left == nullptr || node->right == nullptr) {
+                // 只有 0 个或 1 个儿子时，直接拿儿子顶上来
                 Node* child = node->left;
-                if (!child) {
+                if (child == nullptr) {
                     child = node->right;
                 }
                 delete node;
@@ -169,23 +167,22 @@ private:
                 return child;
             }
 
-            // 有2子时 用右子树最小节点作为后继节点替换当前节点 
-            //保留二叉搜索树的有序性 便于删除后继节点
+            // 有两个儿子时，找右子树里最小的那个来替换
             Node* successor = minNode(node->right);
             node->data = successor->data;
-            bool removedSuccessor = false;
-            node->right = remove(node->right, successor->data.getPhoneNumber(), removedSuccessor);
+            bool tmpRemoved = false;
+            node->right = remove(node->right, successor->data.getPhoneNumber(), tmpRemoved);
             removed = true;
         }
 
-        //回溯时重新调整。
+        // 删除完也要重新调平
         return rebalance(node);
     }
 
     T* find(Node* node, const std::string& phoneNumber) const
     {
-        // 查找
-        if (!node) {
+        // 查找也是按电话号码往左或往右走
+        if (node == nullptr) {
             return nullptr;
         }
 
@@ -200,8 +197,8 @@ private:
 
     void inorder(Node* node, std::vector<T>& contacts) const
     {
-        // 中序遍历
-        if (!node) {
+        // 中序遍历，出来就是按电话号码排好的
+        if (node == nullptr) {
             return;
         }
         inorder(node->left, contacts);
@@ -211,8 +208,8 @@ private:
 
     void clear(Node* node)
     {
-        // 释放节点
-        if (!node) {
+        // 释放节点，避免内存泄漏
+        if (node == nullptr) {
             return;
         }
         clear(node->left);
@@ -233,7 +230,7 @@ public:
 
     bool insertOrUpdate(const T& contact)
     {
-        // 返回值表示是否插入了新节点 if only 覆盖同号码联系人返回0
+        // 返回值表示有没有真的新插入，覆盖旧号码就返回 false
         bool added = false;
         root = insert(root, contact, added);
         return added;
@@ -258,7 +255,7 @@ public:
 
     std::vector<T> toVector() const
     {
-        // 对外仍提供 vector 形式 便于操作
+        // 外面用 vector 更方便，所以这里转一下
         std::vector<T> contacts;
         contacts.reserve(nodeCount);
         inorder(root, contacts);

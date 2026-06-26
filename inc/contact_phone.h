@@ -9,7 +9,7 @@ private:
     std::string qq;
 
 public:
-    // 手机卡联系人：继承基础联系人，并增加籍贯和 QQ。
+    // 手机卡联系人，在基础联系人上多了籍贯和 QQ
     ContactPhone(const std::string& name = "", const std::string& phoneNumber = "",
                  const std::string& hometown = "", const std::string& qq = "");
 

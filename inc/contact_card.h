@@ -10,7 +10,7 @@ private:
     std::string phoneNumber;
 
 public:
-    // 基础联系人：用于手机通讯录，只保存姓名和电话号码。
+    // 基础联系人，只保存姓名和电话号码
     ContactCard(const std::string& name = "", const std::string& phoneNumber = "");
 
     std::string getName() const;
