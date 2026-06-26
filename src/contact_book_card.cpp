@@ -1,7 +1,7 @@
 #include "contact_book_card.h"
+#include "contact_validator.h"
 #include "search_algorithm.h"
 
-#include <algorithm>
 #include <fstream>
 #include <iostream>
 
@@ -19,71 +19,54 @@ ContactBookCard::~ContactBookCard()
     saveToFile();
 }
 
-int ContactBookCard::findIndexByPhone(const string& phoneNumber) const
-{
-    // contacts 始终按电话号码升序保存，因此可以用二分查找定位。
-    auto it = std::lower_bound(contacts.begin(), contacts.end(), phoneNumber,
-        [](const ContactCard& contact, const string& value) {
-            return contact.getPhoneNumber() < value;
-        });
-
-    if (it != contacts.end() && it->getPhoneNumber() == phoneNumber) {
-        return static_cast<int>(it - contacts.begin());
-    }
-    return -1;
-}
-
 bool ContactBookCard::addContact(const ContactCard& contact)
 {
-    int index = findIndexByPhone(contact.getPhoneNumber());
-    if (index != -1) {
-        contacts[index] = contact;
-        return true;
+    if (!isValidPhoneNumber(contact.getPhoneNumber())) {
+        cout << "电话号码格式不合法，联系人未保存。\n";
+        return false;
     }
 
-    if (contacts.size() >= 1000) {
+    if (!contacts.contains(contact.getPhoneNumber()) && contacts.size() >= 1000) {
         cout << "手机通讯录容量已满。\n";
         return false;
     }
 
-    // 新联系人按电话号码插入到有序位置，保证后续查找仍可使用二分。
-    auto it = std::lower_bound(contacts.begin(), contacts.end(), contact.getPhoneNumber(),
-        [](const ContactCard& current, const string& phoneNumber) {
-            return current.getPhoneNumber() < phoneNumber;
-        });
-    contacts.insert(it, contact);
+    contacts.insertOrUpdate(contact);
     return true;
 }
 
 bool ContactBookCard::updateContact(const string& phoneNumber, const ContactCard& contact)
 {
-    int index = findIndexByPhone(phoneNumber);
-    if (index == -1) {
+    if (!contacts.contains(phoneNumber)) {
         return false;
     }
-    contacts[index] = contact;
+
+    if (!isValidPhoneNumber(contact.getPhoneNumber())) {
+        cout << "电话号码格式不合法，修改失败。\n";
+        return false;
+    }
+
+    if (phoneNumber != contact.getPhoneNumber()) {
+        contacts.remove(phoneNumber);
+    }
+    contacts.insertOrUpdate(contact);
     return true;
 }
 
 bool ContactBookCard::deleteContact(const string& phoneNumber)
 {
-    int index = findIndexByPhone(phoneNumber);
-    if (index == -1) {
-        return false;
-    }
-    contacts.erase(contacts.begin() + index);
-    return true;
+    return contacts.remove(phoneNumber);
 }
 
 bool ContactBookCard::hasContact(const string& phoneNumber) const
 {
-    return findIndexByPhone(phoneNumber) != -1;
+    return contacts.contains(phoneNumber);
 }
 
 void ContactBookCard::findByName(const string& name) const
 {
     bool found = false;
-    for (const auto& contact : contacts) {
+    for (const auto& contact : contacts.toVector()) {
         // 使用 KMP 支持姓名关键字查询，而不是只能完整匹配姓名。
         if (kmpContains(contact.getName(), name)) {
             cout << contact << "------------------------------\n";
@@ -97,24 +80,25 @@ void ContactBookCard::findByName(const string& name) const
 
 void ContactBookCard::display() const
 {
-    if (contacts.empty()) {
+    std::vector<ContactCard> allContacts = contacts.toVector();
+    if (allContacts.empty()) {
         cout << "手机通讯录为空。\n";
         return;
     }
 
-    for (const auto& contact : contacts) {
+    for (const auto& contact : allContacts) {
         cout << contact << "------------------------------\n";
     }
 }
 
 int ContactBookCard::size() const
 {
-    return static_cast<int>(contacts.size());
+    return contacts.size();
 }
 
-const std::vector<ContactCard>& ContactBookCard::getContacts() const
+std::vector<ContactCard> ContactBookCard::getContacts() const
 {
-    return contacts;
+    return contacts.toVector();
 }
 
 void ContactBookCard::loadFromFile()
@@ -129,16 +113,10 @@ void ContactBookCard::loadFromFile()
     string name;
     string phoneNumber;
     while (std::getline(fin, name) && std::getline(fin, phoneNumber)) {
-        if (!name.empty() && !phoneNumber.empty()) {
-            contacts.push_back(ContactCard(name, phoneNumber));
+        if (!name.empty() && isValidPhoneNumber(phoneNumber)) {
+            contacts.insertOrUpdate(ContactCard(name, phoneNumber));
         }
     }
-
-    // 文件中的数据可能不是有序的，读入后统一排序。
-    std::sort(contacts.begin(), contacts.end(),
-        [](const ContactCard& a, const ContactCard& b) {
-            return a.getPhoneNumber() < b.getPhoneNumber();
-        });
 }
 
 void ContactBookCard::saveToFile() const
@@ -150,7 +128,7 @@ void ContactBookCard::saveToFile() const
     }
 
     // 每个手机联系人用两行保存：姓名、电话号码。
-    for (const auto& contact : contacts) {
+    for (const auto& contact : contacts.toVector()) {
         fout << contact.getName() << '\n'
              << contact.getPhoneNumber() << '\n';
     }

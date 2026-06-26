@@ -1,4 +1,5 @@
 #include "contact_card.h"
+#include "contact_validator.h"
 
 #include <limits>
 
@@ -43,7 +44,13 @@ std::istream& operator>>(std::istream& is, ContactCard& contact)
     std::cout << "请输入姓名: ";
     std::getline(is >> std::ws, name);
     std::cout << "请输入电话号码: ";
-    std::getline(is, phoneNumber);
+    while (true) {
+        std::getline(is, phoneNumber);
+        if (isValidPhoneNumber(phoneNumber)) {
+            break;
+        }
+        std::cout << "电话号码格式不合法，请输入 6-20 位数字，可选前缀 +: ";
+    }
 
     contact.setName(name);
     contact.setPhoneNumber(phoneNumber);

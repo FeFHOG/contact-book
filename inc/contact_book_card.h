@@ -3,16 +3,15 @@
 
 #include "contact_book_interface.h"
 #include "contact_card.h"
+#include "contact_tree.h"
 
 #include <string>
 #include <vector>
 
 class ContactBookCard : public ContactBookInterface {
 private:
-    std::vector<ContactCard> contacts;
+    ContactTree<ContactCard> contacts;
     std::string fileName;
-
-    int findIndexByPhone(const std::string& phoneNumber) const;
 
 public:
     explicit ContactBookCard(const std::string& fileName = "data/phone.txt");
@@ -26,7 +25,7 @@ public:
     void display() const override;
     int size() const override;
 
-    const std::vector<ContactCard>& getContacts() const;
+    std::vector<ContactCard> getContacts() const;
 
     void loadFromFile();
     void saveToFile() const;
