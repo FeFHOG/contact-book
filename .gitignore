@@ -1,0 +1,7 @@
+target/
+*.o
+*.out
+*.exe
+main
+*.dSYM/
+.DS_Store
